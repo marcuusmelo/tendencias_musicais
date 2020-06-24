@@ -5,3 +5,5 @@ O módulo de __Mineração de Dados__, do curso Python Zero to Hero, da Gh LABS 
 
 #### COLABORADORES
 - Marcus Melo
+
+[adicione o seu nome na lista de colaboradores]
