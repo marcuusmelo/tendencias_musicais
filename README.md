@@ -15,4 +15,5 @@ O setup necessário para executar os códigos contidos nesse projeto está conti
 - Marcus Melo
 - Bruno Rezende
 - Renato Felício
+- Rafael Borges
   [adicione o seu nome na lista de colaboradores]
