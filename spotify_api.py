@@ -2,7 +2,7 @@
 Module to handle the Spotify data aqcisition
 """
 import requests
-
+from credentials import SPOTIFY_CLIENT_ID, SPOTIFY_SECRET
 
 class SpotifyAPI():
     """
@@ -11,14 +11,18 @@ class SpotifyAPI():
         - client_id (str)
         - client_secret (str)
         - token (str)
+    METHODS:
+        - authentication
+        - get_playlist_data
+        - get_artist_data
     """
 
     def __init__(self):
         """
         Constructor method for SpotifyAPI
         """
-        self.client_id = input('digite seu spotify client id: ')
-        self.client_secret = input('digite seu spotify client secret: ')
+        self.client_id = SPOTIFY_CLIENT_ID
+        self.client_secret = SPOTIFY_SECRET
         self.token = self.authentication()
 
     def authentication(self):
@@ -40,21 +44,35 @@ class SpotifyAPI():
 
         return token
 
-    def get_playlist_data(self):
+    def get_playlist_data(self, playlist_id):
         """
         DESCRIPTION: Method to fetch playlist data from Spotify API
-        INPUT: None
+        INPUT: playlist_id (str)
         OUTPUT: playlist_json_response (json/dict)
         """
-        playlist_url = 'https://api.spotify.com/v1/playlists/37i9dQZEVXbLRQDuF5jeBp'
+        playlist_url = 'https://api.spotify.com/v1/playlists/{0}'.format(playlist_id)
         headers = {'Authorization': 'Bearer {0}'.format(self.token)}
         playlist_response = requests.get(playlist_url, headers=headers)
         playlist_json_response = playlist_response.json()
 
         return playlist_json_response
 
+    def get_artist_data(self, artist_id_list):
+        """
+        DESCRIPTION: Method to fetch multiple artist data from Spotify API
+        INPUT: artist_id_list (list)
+        OUTPUT: artists_json_response (json/dict)
+        """
+        artists_parameter = ','.join(artist_id_list)
+        artists_url = 'https://api.spotify.com/v1/artists/{0}'.format(artists_parameter)
+        headers = {'Authorization': 'Bearer {0}'.format(self.token)}
+        artists_response = requests.get(artists_url, headers=headers)
+        artists_json_response = artists_response.json()
+
+        return artists_json_response
+
 
 if __name__ == '__main__':
     spotify_api = SpotifyAPI()
-    playlist_data = spotify_api.get_playlist_data()
+    playlist_data = spotify_api.get_playlist_data('37i9dQZEVXbLRQDuF5jeBp')
     print(playlist_data)

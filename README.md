@@ -8,7 +8,8 @@ O setup necessário para executar os códigos contidos nesse projeto está conti
 1. Clonar o repositório
 2. Criar um ambiente virtual em Python 3.6, 3.7 ou 3.8 (se o seu ambiente já está criado, passe para o próximo passo)
 3. Ativar o ambiente virtual
-4. Instalar as bibliotecas contidas no arquivo requirements.txt 
+4. Instalar as bibliotecas contidas no arquivo requirements.txt
+5. Criar uma cópia do arquivo credentials_template.py chamado credentials.py e preencher os devidos campos em seu interior
 
 
 #### COLABORADORES
@@ -16,4 +17,6 @@ O setup necessário para executar os códigos contidos nesse projeto está conti
 - Bruno Rezende
 - Renato Felício
 - Rafael Borges
-  [adicione o seu nome na lista de colaboradores]
+- Erika Timo
+
+ [adicione o seu nome na lista de colaboradores]
