@@ -1,7 +1,7 @@
 """
 Module to handle the HTML data acquisition from Billboard website
 """
-from html_api import HtmlAPI
+from .html_api import HtmlAPI
 
 class BillboardAPI(HtmlAPI):
     """

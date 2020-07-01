@@ -1,7 +1,7 @@
 """
 Module to handle the HTML data acquisition from DJ Mag website
 """
-from html_api import HtmlAPI
+from .html_api import HtmlAPI
 
 class DJMagAPI(HtmlAPI):
     """
