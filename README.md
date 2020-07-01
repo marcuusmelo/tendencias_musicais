@@ -18,5 +18,3 @@ O setup necessário para executar os códigos contidos nesse projeto está conti
 - Renato Felício
 - Rafael Borges
 - Erika Timo
-
- [adicione o seu nome na lista de colaboradores]
