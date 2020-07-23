@@ -38,7 +38,10 @@ class SpotifyAPI():
             data=body_params,
             auth=(self.client_id, self.client_secret)
         )
-        token = response.json()['access_token']
+        try:
+            token = response.json()['access_token']
+        except KeyError:
+            token = ''
 
         return token
 
