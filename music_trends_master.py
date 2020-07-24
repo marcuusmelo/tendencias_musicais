@@ -25,7 +25,7 @@ class MusicTrends():
     """
     def __init__(self):
         self.timestamp = datetime.now()
-        self.timestamp_str_compact = self.timestamp.strftime('%Y%d%m%H%M%S')
+        self.timestamp_str_compact = self.timestamp.strftime('%Y%m%d%H%M%S')
         self.dj_mag_data = {}
         self.billboard_data = {}
         self.spotify_playlists_data = {}
