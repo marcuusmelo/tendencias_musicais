@@ -4,3 +4,4 @@ __pycache__*
 credentials.py
 test.py
 storage_music_trends*
+*.pyc

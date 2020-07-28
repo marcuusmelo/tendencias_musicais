@@ -2,6 +2,8 @@
 Module to handle the Spotify data aqcisition
 """
 import requests
+import pandas as pd
+from utilities.db_access import get_db_connection
 
 class SpotifyAPI():
     """
@@ -24,6 +26,7 @@ class SpotifyAPI():
         self.client_secret = secret
         self.token = self.authentication()
 
+
     def authentication(self):
         """
         DESCRIPTION: Method to handle the authentication with Spotify API
@@ -45,6 +48,7 @@ class SpotifyAPI():
 
         return token
 
+
     def get_several_playlists_data(self, playlists_table):
         """
         DESCRIPTION: Use the method get_playlist_data to get several playlists data
@@ -62,6 +66,7 @@ class SpotifyAPI():
             several_playlists_json_response.update(this_playlist_data)
 
         return several_playlists_json_response
+
 
     def get_playlist_data(self, playlist_info):
         """
@@ -85,6 +90,7 @@ class SpotifyAPI():
 
         return playlist_json_response
 
+
     def pre_process_playlist_json(self, raw_playlist_json, playlist_name):
         """
         DESCRIPTION: Extract data from raw api reponse and put in json format
@@ -97,37 +103,87 @@ class SpotifyAPI():
             track_info = track['track']
 
             track_info_pick = {
-                'main_artist': track_info['album']['artists'][0]['name'],
-                'main_artist_id': track_info['album']['artists'][0]['id'],
+                'playlist_id_id': track_info['id'],
+                'main_artist_id_id': track_info['album']['artists'][0]['id'],
                 'all_artists': '*'.join([info['name'] for info in track_info['artists']]),
                 'all_artists_ids': '*'.join([info['id'] for info in track_info['artists']]),
                 'release_date': track_info['album']['release_date'],
                 'duration': track_info['duration_ms'],
-                'name': track_info['name'],
+                'song_name': track_info['name'],
                 'popularity': track_info['popularity'],
-                'position': index + 1
+                'position': index + 1,
             }
 
             playlist_info[playlist_name].append(track_info_pick)
 
         return playlist_info
 
-    def get_several_artists_data(self, artist_id_list):
+    def get_artists_ids_from_db(self):
+        """
+        """
+        conn = get_db_connection()
+        query = """
+            select main_artist_id_id
+            from tendencias_musicais_app_spotifydata
+            where main_artist_id_id not in
+            (select artist_id from tendencias_musicais_app_artists)
+            group by main_artist_id_id
+        """
+        artist_ids_df = pd.read_sql_query(query, conn)
+        artist_ids_list = artist_ids_df['main_artist_id_id'].to_list()
+        return artist_ids_list
+
+
+    def pre_process_artists_json(self, artists_response_list):
+        """
+        """
+        artists_info = {'artists': []}
+
+        for artist_data in artists_response_list:
+            genres = artist_data['genres']
+            genres = genres + [''] * 3
+            artists_info_pick = {
+                'artist_id': artist_data['id'],
+                'name': artist_data['name'],
+                'music_genre_1': genres[0],
+                'music_genre_2': genres[1],
+                'music_genre_3': genres[2]
+            }
+
+            artists_info['artists'].append(artists_info_pick)
+
+        return artists_info
+
+
+    def get_several_artists_data(self):
         """
         DESCRIPTION: Method to fetch multiple artist data from Spotify API
         INPUT: artist_id_list (list)
         OUTPUT: artists_json_response (json/dict)
         """
-        artists_parameter = ','.join(artist_id_list)
-        artists_url = 'https://api.spotify.com/v1/artists/{0}'.format(artists_parameter)
-        headers = {'Authorization': 'Bearer {0}'.format(self.token)}
-        artists_response = requests.get(artists_url, headers=headers)
-        artists_json_response = artists_response.json()
+        def chunks(lst, n):
+            """Yield successive n-sized chunks from lst."""
+            for i in range(0, len(lst), n):
+                yield lst[i:i + n]
+
+        artist_ids_list = self.get_artists_ids_from_db()
+
+        artists_response_list = []
+        for ids_sublist in chunks(artist_ids_list, 50):
+            artists_parameter = ','.join(ids_sublist)
+            artists_url = 'https://api.spotify.com/v1/artists/?ids={0}'.format(artists_parameter)
+            headers = {'Authorization': 'Bearer {0}'.format(self.token)}
+            artists_response = requests.get(artists_url, headers=headers)
+            artists_json_response = artists_response.json()
+            artists_response_list += artists_json_response['artists']
+
+        artists_json_response = self.pre_process_artists_json(artists_response_list)
 
         return artists_json_response
 
 
 if __name__ == '__main__':
     spotify_api = SpotifyAPI('', '')
-    playlist_data = spotify_api.get_playlist_data('37i9dQZEVXbLRQDuF5jeBp')
-    print(playlist_data)
+    # playlist_data = spotify_api.get_playlist_data('37i9dQZEVXbLRQDuF5jeBp')
+    artists_data = spotify_api.get_several_artists_data()
+    print(artists_data)
