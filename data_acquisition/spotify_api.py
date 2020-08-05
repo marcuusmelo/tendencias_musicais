@@ -127,7 +127,7 @@ class SpotifyAPI():
             from tendencias_musicais_app_artists
         """
         artist_ids_df = pd.read_sql_query(query, engine)
-        artist_ids_list = artist_ids_df['main_artist_id_id'].to_list()
+        artist_ids_list = artist_ids_df['artist_id'].to_list()
         return artist_ids_list
 
 
