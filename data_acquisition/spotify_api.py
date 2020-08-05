@@ -123,11 +123,8 @@ class SpotifyAPI():
         """
         engine = get_postgress_engine()
         query = """
-            select main_artist_id_id
-            from tendencias_musicais_app_spotifydata
-            where main_artist_id_id not in
-            (select artist_id from tendencias_musicais_app_artists)
-            group by main_artist_id_id
+            select distinct artist_id
+            from tendencias_musicais_app_artists
         """
         artist_ids_df = pd.read_sql_query(query, engine)
         artist_ids_list = artist_ids_df['main_artist_id_id'].to_list()
@@ -155,7 +152,7 @@ class SpotifyAPI():
         return artists_info
 
 
-    def get_several_artists_data(self):
+    def get_several_artists_data(self, spotify_artist_list):
         """
         DESCRIPTION: Method to fetch multiple artist data from Spotify API
         INPUT: artist_id_list (list)
@@ -166,10 +163,11 @@ class SpotifyAPI():
             for i in range(0, len(lst), n):
                 yield lst[i:i + n]
 
-        artist_ids_list = self.get_artists_ids_from_db()
+        db_artist_list = self.get_artists_ids_from_db()
+        new_artist_list = [id for id in spotify_artist_list if id not in db_artist_list]
 
         artists_response_list = []
-        for ids_sublist in chunks(artist_ids_list, 50):
+        for ids_sublist in chunks(new_artist_list, 50):
             artists_parameter = ','.join(ids_sublist)
             artists_url = 'https://api.spotify.com/v1/artists/?ids={0}'.format(artists_parameter)
             headers = {'Authorization': 'Bearer {0}'.format(self.token)}
@@ -184,6 +182,5 @@ class SpotifyAPI():
 
 if __name__ == '__main__':
     spotify_api = SpotifyAPI('', '')
-    # playlist_data = spotify_api.get_playlist_data('37i9dQZEVXbLRQDuF5jeBp')
-    artists_data = spotify_api.get_several_artists_data()
-    print(artists_data)
+    playlist_data = spotify_api.get_playlist_data('37i9dQZEVXbLRQDuF5jeBp')
+    print(playlist_data)

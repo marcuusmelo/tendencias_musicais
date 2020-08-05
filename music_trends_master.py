@@ -41,7 +41,7 @@ class MusicTrends():
             os.path.dirname(os.path.abspath(__file__)),
             'storage_music_trends'
         )
-        self.sql_upload_list = ['spotify', 'playlists', 'artists']
+        self.sql_upload_list = ['artists', 'playlists', 'spotify']
 
 
     def run_music_trends(self):
@@ -56,6 +56,18 @@ class MusicTrends():
         self.data_s3_upload()
         self.data_sql_upload()
         self.local_storage_cleanup()
+
+
+    def get_artist_list(self):
+        """
+        DESCRIPTION: Get a list of unique artists in the new spotify data
+        INPUT: None
+        OUTPUT: artist_list (list)
+        """
+        spotify_playlist_df_list = self.spotify_playlists_data.values()
+        spotify_playlist_df = pd.concat(spotify_playlist_df_list, ignore_index=True)
+        artist_list = list(spotify_playlist_df['main_artist_id_id'].unique())
+        return artist_list
 
 
     def data_acquisition(self):
@@ -84,7 +96,8 @@ class MusicTrends():
         for key, value in spotify_playlists_data_json.items():
             self.spotify_playlists_data[key] = pd.DataFrame(value)
 
-        spotify_artists_data_json = spotify_api.get_several_artists_data()
+        artists_list = self.get_artist_list()
+        spotify_artists_data_json = spotify_api.get_several_artists_data(artists_list)
         for key, value in spotify_artists_data_json.items():
             self.artists_data[key] = pd.DataFrame(value)
 
