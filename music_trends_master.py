@@ -3,6 +3,7 @@ Master script for the different processes of the music trend analysis software
 """
 import os
 from datetime import datetime
+import boto3
 import pandas as pd
 
 from credentials import SPOTIFY_CLIENT_ID, SPOTIFY_SECRET
@@ -161,7 +162,11 @@ class MusicTrends():
                     data_df.to_csv(file_path, index=False)
 
     def data_s3_upload(self):
-        pass
+        s3_client = boto3.client('s3')
+        bucket = 'storage-tendencias-musicais'
+        for object_name in os.listdir(self.storage_path):
+            file_name = os.path.join(self.storage_path, object_name)
+            s3_client.upload_file(file_name, bucket, object_name)
 
     def data_sql_upload(self):
         for source_data_type in self.sql_upload_list:
