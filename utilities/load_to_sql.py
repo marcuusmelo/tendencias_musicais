@@ -29,9 +29,13 @@ def load_to_sqlite(table_name, csv_path):
 def load_files_in_storage(file_type='spotify', db_type='postgres'):
     """
     """
-    storage_path = '/Users/marcusmelo/Desktop/projeto_m3_gh/tendencias_musicais/storage_music_trends'
+    storage_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        '..',
+        'storage_music_trends'
+    )
     storage_file_list = os.listdir(storage_path)
-    selected_files =[x for x in storage_file_list if x.startswith(file_type)]
+    selected_files = [x for x in storage_file_list if x.startswith(file_type)]
 
     table_lookup = {
         'spotify': 'tendencias_musicais_app_spotifydata',
