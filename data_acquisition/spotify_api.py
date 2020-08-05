@@ -3,7 +3,7 @@ Module to handle the Spotify data aqcisition
 """
 import requests
 import pandas as pd
-from utilities.db_access import get_db_connection
+from utilities.db_access import get_postgress_engine
 
 class SpotifyAPI():
     """
@@ -121,7 +121,7 @@ class SpotifyAPI():
     def get_artists_ids_from_db(self):
         """
         """
-        conn = get_db_connection()
+        engine = get_postgress_engine()
         query = """
             select main_artist_id_id
             from tendencias_musicais_app_spotifydata
@@ -129,7 +129,7 @@ class SpotifyAPI():
             (select artist_id from tendencias_musicais_app_artists)
             group by main_artist_id_id
         """
-        artist_ids_df = pd.read_sql_query(query, conn)
+        artist_ids_df = pd.read_sql_query(query, engine)
         artist_ids_list = artist_ids_df['main_artist_id_id'].to_list()
         return artist_ids_list
 
