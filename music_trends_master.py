@@ -11,6 +11,7 @@ from data_acquisition.billboard_api import BillboardAPI
 from data_acquisition.djmag_api import DJMagAPI
 from data_acquisition.spotify_api import SpotifyAPI
 from data_cleaning.cleaning_functions import clean_music_name, make_cols_lowercase, add_metadata
+from utilities.load_to_sql import load_files_in_storage
 
 
 class MusicTrends():
@@ -36,7 +37,10 @@ class MusicTrends():
             'spotify': self.spotify_playlists_data,
             'artists': self.artists_data
         }
-        self.storage_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'storage_music_trends')
+        self.storage_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'storage_music_trends'
+        )
 
 
     def run_music_trends(self):
@@ -47,7 +51,10 @@ class MusicTrends():
         """
         self.data_acquisition()
         self.data_cleaning()
-        self.data_storage()
+        self.data_local_storage()
+        self.data_s3_upload()
+        self.data_sql_upload()
+        self.local_storage_cleanup()
 
 
     def data_acquisition(self):
@@ -120,20 +127,12 @@ class MusicTrends():
                     if source_name == 'spotify':
                         data_dict[key]['song_name'] = data_dict[key]['song_name'].apply(clean_music_name)
 
-
-    def data_storage(self):
+    def data_local_storage(self):
         """
         DESCRIPTION: Store each data dataframe as csv
         INPUT: None
         OUTPUT: None
         """
-        # self.data_source_table = {
-        #     'billboard': self.billboard_data,
-        #     'dj_mag': self.dj_mag_data,
-        #     'spotify': self.spotify_playlists_data,
-        #     'artists': self.artists_data
-        # }
-
         if not os.path.exists(self.storage_path):
             os.makedirs(self.storage_path)
 
@@ -144,7 +143,18 @@ class MusicTrends():
                 file_path = file_path_base.format(
                     self.storage_path, source_name, key, self.timestamp_str_compact
                 )
-                data_df.to_csv(file_path, index=False)
+                if not data_df.empty:
+                    data_df.to_csv(file_path, index=False)
+
+    def data_s3_upload(self):
+        pass
+
+    def data_sql_upload(self):
+        for source_data_type in self.data_source_table.keys():
+            load_files_in_storage(source_data_type)
+
+    def local_storage_cleanup(self):
+        pass
 
 
 if __name__ == '__main__':
