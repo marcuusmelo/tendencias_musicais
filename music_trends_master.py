@@ -41,6 +41,7 @@ class MusicTrends():
             os.path.dirname(os.path.abspath(__file__)),
             'storage_music_trends'
         )
+        self.sql_upload_list = ['spotify', 'playlists', 'artists']
 
 
     def run_music_trends(self):
@@ -150,7 +151,7 @@ class MusicTrends():
         pass
 
     def data_sql_upload(self):
-        for source_data_type in self.data_source_table.keys():
+        for source_data_type in self.sql_upload_list:
             load_files_in_storage(source_data_type)
 
     def local_storage_cleanup(self):
