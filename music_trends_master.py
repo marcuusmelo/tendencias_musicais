@@ -25,14 +25,16 @@ class MusicTrends():
     """
     def __init__(self):
         self.timestamp = datetime.now()
-        self.timestamp_str_compact = self.timestamp.strftime('%Y%d%m%H%M%S')
+        self.timestamp_str_compact = self.timestamp.strftime('%Y%m%d%H%M%S')
         self.dj_mag_data = {}
         self.billboard_data = {}
         self.spotify_playlists_data = {}
+        self.artists_data = {}
         self.data_source_table = {
             'billboard': self.billboard_data,
             'dj_mag': self.dj_mag_data,
-            'spotify': self.spotify_playlists_data
+            'spotify': self.spotify_playlists_data,
+            'artists': self.artists_data
         }
         self.storage_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'storage_music_trends')
 
@@ -74,6 +76,10 @@ class MusicTrends():
         for key, value in spotify_playlists_data_json.items():
             self.spotify_playlists_data[key] = pd.DataFrame(value)
 
+        spotify_artists_data_json = spotify_api.get_several_artists_data()
+        for key, value in spotify_artists_data_json.items():
+            self.artists_data[key] = pd.DataFrame(value)
+
 
     def data_cleaning(self):
         """
@@ -89,28 +95,30 @@ class MusicTrends():
         lowercase_columns_table = {
             'billboard': ['title', 'artist'],
             'dj_mag': ['artist'],
-            'spotify': ['main_artist', 'all_artists', 'name']
+            'spotify': ['all_artists', 'song_name'],
+            'artists': ['name', 'music_genre_1', 'music_genre_2', 'music_genre_3']
         }
 
         for source_name, data_dict in self.data_source_table.items():
             lowercase_columns = lowercase_columns_table[source_name]
 
             for key, data_df in data_dict.items():
-
-                # Add metadata
-                metadata_dict = {
-                    'timestamp': self.timestamp,
-                    'source': source_name,
-                    'source_detail': key
-                }
-                data_dict[key] = add_metadata(data_df, metadata_dict)
+                if data_dict[key].empty:
+                    continue
 
                 # make lowercase
                 data_dict[key] = make_cols_lowercase(data_df, lowercase_columns)
 
-                # clean music name
-                if source_name == 'spotify':
-                    data_dict[key]['name'] = data_dict[key]['name'].apply(clean_music_name)
+                if source_name != 'artists':
+                    # Add metadata
+                    metadata_dict = {
+                        'source_date': self.timestamp,
+                    }
+                    data_dict[key] = add_metadata(data_df, metadata_dict)
+
+                    # clean music name
+                    if source_name == 'spotify':
+                        data_dict[key]['song_name'] = data_dict[key]['song_name'].apply(clean_music_name)
 
 
     def data_storage(self):
@@ -119,11 +127,12 @@ class MusicTrends():
         INPUT: None
         OUTPUT: None
         """
-        self.data_source_table = {
-            'billboard': self.billboard_data,
-            'dj_mag': self.dj_mag_data,
-            'spotify': self.spotify_playlists_data
-        }
+        # self.data_source_table = {
+        #     'billboard': self.billboard_data,
+        #     'dj_mag': self.dj_mag_data,
+        #     'spotify': self.spotify_playlists_data,
+        #     'artists': self.artists_data
+        # }
 
         if not os.path.exists(self.storage_path):
             os.makedirs(self.storage_path)
