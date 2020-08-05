@@ -103,7 +103,7 @@ class SpotifyAPI():
             track_info = track['track']
 
             track_info_pick = {
-                'playlist_id_id': track_info['id'],
+                'playlist_id_id': raw_playlist_json['id'],
                 'main_artist_id_id': track_info['album']['artists'][0]['id'],
                 'all_artists': '*'.join([info['name'] for info in track_info['artists']]),
                 'all_artists_ids': '*'.join([info['id'] for info in track_info['artists']]),
