@@ -3,6 +3,7 @@ Master script for the different processes of the music trend analysis software
 """
 import os
 from datetime import datetime
+import boto3
 import pandas as pd
 
 from credentials import SPOTIFY_CLIENT_ID, SPOTIFY_SECRET
@@ -11,6 +12,7 @@ from data_acquisition.billboard_api import BillboardAPI
 from data_acquisition.djmag_api import DJMagAPI
 from data_acquisition.spotify_api import SpotifyAPI
 from data_cleaning.cleaning_functions import clean_music_name, make_cols_lowercase, add_metadata
+from utilities.load_to_sql import load_files_in_storage
 
 
 class MusicTrends():
@@ -36,7 +38,11 @@ class MusicTrends():
             'spotify': self.spotify_playlists_data,
             'artists': self.artists_data
         }
-        self.storage_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'storage_music_trends')
+        self.storage_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'storage_music_trends'
+        )
+        self.sql_upload_list = ['artists', 'playlists', 'spotify']
 
 
     def run_music_trends(self):
@@ -47,7 +53,22 @@ class MusicTrends():
         """
         self.data_acquisition()
         self.data_cleaning()
-        self.data_storage()
+        self.data_local_storage()
+        self.data_s3_upload()
+        self.data_sql_upload()
+        self.local_storage_cleanup()
+
+
+    def get_artist_list(self):
+        """
+        DESCRIPTION: Get a list of unique artists in the new spotify data
+        INPUT: None
+        OUTPUT: artist_list (list)
+        """
+        spotify_playlist_df_list = self.spotify_playlists_data.values()
+        spotify_playlist_df = pd.concat(spotify_playlist_df_list, ignore_index=True)
+        artist_list = list(spotify_playlist_df['main_artist_id_id'].unique())
+        return artist_list
 
 
     def data_acquisition(self):
@@ -76,7 +97,8 @@ class MusicTrends():
         for key, value in spotify_playlists_data_json.items():
             self.spotify_playlists_data[key] = pd.DataFrame(value)
 
-        spotify_artists_data_json = spotify_api.get_several_artists_data()
+        artists_list = self.get_artist_list()
+        spotify_artists_data_json = spotify_api.get_several_artists_data(artists_list)
         for key, value in spotify_artists_data_json.items():
             self.artists_data[key] = pd.DataFrame(value)
 
@@ -120,20 +142,12 @@ class MusicTrends():
                     if source_name == 'spotify':
                         data_dict[key]['song_name'] = data_dict[key]['song_name'].apply(clean_music_name)
 
-
-    def data_storage(self):
+    def data_local_storage(self):
         """
         DESCRIPTION: Store each data dataframe as csv
         INPUT: None
         OUTPUT: None
         """
-        # self.data_source_table = {
-        #     'billboard': self.billboard_data,
-        #     'dj_mag': self.dj_mag_data,
-        #     'spotify': self.spotify_playlists_data,
-        #     'artists': self.artists_data
-        # }
-
         if not os.path.exists(self.storage_path):
             os.makedirs(self.storage_path)
 
@@ -144,7 +158,22 @@ class MusicTrends():
                 file_path = file_path_base.format(
                     self.storage_path, source_name, key, self.timestamp_str_compact
                 )
-                data_df.to_csv(file_path, index=False)
+                if not data_df.empty:
+                    data_df.to_csv(file_path, index=False)
+
+    def data_s3_upload(self):
+        s3_client = boto3.client('s3')
+        bucket = 'storage-tendencias-musicais'
+        for object_name in os.listdir(self.storage_path):
+            file_name = os.path.join(self.storage_path, object_name)
+            s3_client.upload_file(file_name, bucket, object_name)
+
+    def data_sql_upload(self):
+        for source_data_type in self.sql_upload_list:
+            load_files_in_storage(source_data_type)
+
+    def local_storage_cleanup(self):
+        pass
 
 
 if __name__ == '__main__':
